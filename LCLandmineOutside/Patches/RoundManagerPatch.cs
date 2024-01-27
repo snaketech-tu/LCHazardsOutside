@@ -124,7 +124,13 @@ namespace LCHazardsOutside.Patches {
             for (int j = 0; j < actualSpawnRate; j++)
             {
                 System.Random random = hazardCalculationContainer.Random;
-                Vector3 randomPosition = __instance.GetRandomNavMeshPositionInBoxPredictable(middlePoint, spawnRadius, __instance.navHit, hazardCalculationContainer.Random, LayerMask.NameToLayer(LAYER_NAME));
+                Vector3 randomPosition = SpawnHelper.GetRandomGroundPosition(middlePoint, spawnRadius, hazardCalculationContainer.Random, -1);
+
+                if (randomPosition == middlePoint)
+                {
+                    LCHazardsOutside.GetLogger().LogDebug("No NavMesh hit!");
+                    continue;
+                }
 
                 bool invalidSpawnPointFound = IsInvalidSpawnPointHighSafety(hazardCalculationContainer.SpawnDenialPoints, randomPosition, safetyPositions, hazardCalculationContainer.NeedsSafetyZone);
 
@@ -134,10 +140,6 @@ namespace LCHazardsOutside.Patches {
                     LCHazardsOutside.GetLogger().LogDebug("Hazard was too close to denial or safety zone and was therefore deleted: " + randomPosition);
                     continue;
                 }
-
-                //SpawnableMapObject spawnableMapObject = hazardCalculationContainer.SpawnableMapObject;
-                //Vector3 position = spawnableMapObject.prefabToSpawn.transform.position;
-                //position = randomPositionInSpawnRadius;
 
                 SpawnHazard(__instance, random, hazardCalculationContainer.SpawnableMapObject, randomPosition);
 

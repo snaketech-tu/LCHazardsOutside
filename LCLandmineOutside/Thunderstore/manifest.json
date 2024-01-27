@@ -1,0 +1,9 @@
+{
+    "name": "HazardsOutside",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/snaketech-tu",
+    "description": "[v49] This mod allows hazards such as landmines and turrets to also spawn outside! Spawn rates can be configured for each hazard.",
+    "dependencies": [
+        "BepInEx-BepInExPack-5.4.2100"
+    ]
+}

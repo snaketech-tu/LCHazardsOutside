@@ -12,7 +12,7 @@ namespace LCHazardsOutside
             float x, y2, z;
 
             // Geometry layer
-            int roomLayerMask = 1 << LayerMask.NameToLayer("Room");
+            int roomLayerMask = (1 << LayerMask.NameToLayer("Room"));
 
             Vector3 randomPosition;
 

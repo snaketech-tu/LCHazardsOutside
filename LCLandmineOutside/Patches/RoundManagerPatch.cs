@@ -219,6 +219,7 @@ namespace LCHazardsOutside.Patches {
         {
             centerPosition = (shipLandPosition + mainEntrancePosition) / 2;
             spawnRadius = Vector3.Distance(mainEntrancePosition, centerPosition) * spawnRadiusMultiplier;
+            centerPosition.y = Mathf.Max(shipLandPosition.y, mainEntrancePosition.y);
         }
     }
 }

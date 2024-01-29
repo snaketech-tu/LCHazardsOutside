@@ -1,6 +1,6 @@
 {
     "name": "HazardsOutside",
-    "version_number": "1.0.1",
+    "version_number": "1.0.2",
     "website_url": "https://github.com/snaketech-tu/LCHazardsOutside",
     "description": "[v49] This mod allows hazards such as landmines, turrets and even modded ones to also spawn outside! Spawn rates can be configured for each hazard.",
     "dependencies": [

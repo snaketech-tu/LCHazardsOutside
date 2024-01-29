@@ -12,7 +12,7 @@ namespace LCHazardsOutside
     public class LCHazardsOutside : BaseUnityPlugin {
         private const string modGUID = "snake.tech.LCHazardsOutside";
         private const string modName = "LCHazardsOutside";
-        private const string modVersion = "1.0.1.0";
+        private const string modVersion = "1.0.2.0";
 
         private readonly Harmony harmony = new(modGUID);
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using Unity.Netcode;
+using UnityEngine.UIElements;
 
 namespace LCHazardsOutside.Patches {
 
@@ -22,6 +23,7 @@ namespace LCHazardsOutside.Patches {
             LCHazardsOutside.GetLogger().LogDebug("randomMapSeed: " + StartOfRound.Instance.randomMapSeed);
             System.Random random = new(StartOfRound.Instance.randomMapSeed + 587);
             List<GameObject> spawnDenialPoints = [.. GameObject.FindGameObjectsWithTag("SpawnDenialPoint")];
+            List<Transform> shipPathPoints = [.. __instance.shipSpawnPathPoints];
 
             LCHazardsOutside.GetLogger().LogDebug("Getting spawnable objects..");
             List<SpawnableMapObject> hazardObjects = [.. __instance.currentLevel.spawnableMapObjects];
@@ -119,12 +121,12 @@ namespace LCHazardsOutside.Patches {
             safetyPositions.Add(shipLandPosition);
             LCHazardsOutside.GetLogger().LogDebug("Ship spawn point: " + shipLandPosition);
 
-            CalculateMiddlePoint(shipLandPosition, mainEntrancePosition, hazardCalculationContainer.SpawnRatioMultiplier, out Vector3 middlePoint, out float spawnRadius);
+            CalculateCenterPosition(shipLandPosition, mainEntrancePosition, hazardCalculationContainer.SpawnRatioMultiplier, out Vector3 middlePoint, out float spawnRadius);
 
             for (int j = 0; j < actualSpawnRate; j++)
             {
                 System.Random random = hazardCalculationContainer.Random;
-                Vector3 randomPosition = SpawnHelper.GetRandomGroundPosition(middlePoint, spawnRadius, hazardCalculationContainer.Random, -1);
+                (Vector3 randomPosition, Quaternion quaternion) = SpawnHelper.GetRandomGroundPosition(middlePoint, spawnRadius, hazardCalculationContainer.Random, -1);
 
                 if (randomPosition == middlePoint)
                 {
@@ -132,7 +134,7 @@ namespace LCHazardsOutside.Patches {
                     continue;
                 }
 
-                bool invalidSpawnPointFound = IsInvalidSpawnPointHighSafety(hazardCalculationContainer.SpawnDenialPoints, randomPosition, safetyPositions, hazardCalculationContainer.NeedsSafetyZone);
+                bool invalidSpawnPointFound = IsInvalidSpawnPointHighSafety(hazardCalculationContainer.SpawnDenialPoints, shipSpawnPathPoints, randomPosition, safetyPositions, hazardCalculationContainer.NeedsSafetyZone);
 
                 // Do not spawn the hazard if it's too close to a spawn denial point.
                 if (invalidSpawnPointFound)
@@ -141,7 +143,7 @@ namespace LCHazardsOutside.Patches {
                     continue;
                 }
 
-                SpawnHazard(__instance, random, hazardCalculationContainer.SpawnableMapObject, randomPosition);
+                SpawnHazard(__instance, random, hazardCalculationContainer.SpawnableMapObject, randomPosition, quaternion);
 
                 hazardCounter++;
             }
@@ -149,10 +151,10 @@ namespace LCHazardsOutside.Patches {
             LCHazardsOutside.GetLogger().LogDebug("Total hazard amount: " + hazardCounter);
         }
 
-        private static void SpawnHazard(RoundManager __instance, System.Random random, SpawnableMapObject spawnableMapObject, Vector3 position)
+        private static void SpawnHazard(RoundManager __instance, System.Random random, SpawnableMapObject spawnableMapObject, Vector3 position, Quaternion quaternion)
         {
             LCHazardsOutside.GetLogger().LogDebug("Spawn hazard outside at: " + position);
-            GameObject gameObject = UnityEngine.Object.Instantiate(spawnableMapObject.prefabToSpawn, position, Quaternion.identity, __instance.mapPropsContainer.transform);
+            GameObject gameObject = UnityEngine.Object.Instantiate(spawnableMapObject.prefabToSpawn, position, quaternion, __instance.mapPropsContainer.transform);
 
             if (spawnableMapObject.spawnFacingAwayFromWall)
             {
@@ -168,12 +170,21 @@ namespace LCHazardsOutside.Patches {
             gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
         }
 
-        private static bool IsInvalidSpawnPoint(List<GameObject> spawnDenialPoints, Vector3 randomNavMeshPositionInBoxPredictable)
+        private static bool IsInvalidSpawnPoint(List<GameObject> spawnDenialPoints, Transform[] shipPathPoints, Vector3 randomPosition)
         {
             bool invalidSpawnPointFound = false;
             foreach (GameObject spawnDenialObject in spawnDenialPoints)
             {
-                if (Vector3.Distance(randomNavMeshPositionInBoxPredictable, spawnDenialObject.transform.position) < 4f)
+                if (Vector3.Distance(randomPosition, spawnDenialObject.transform.position) < 4f)
+                {
+                    invalidSpawnPointFound = true;
+                    break;
+                }
+            }
+
+            foreach (Transform shipPathTransform in shipPathPoints)
+            {
+                if (Vector3.Distance(shipPathTransform.position, randomPosition) < 6f)
                 {
                     invalidSpawnPointFound = true;
                     break;
@@ -183,9 +194,9 @@ namespace LCHazardsOutside.Patches {
             return invalidSpawnPointFound;
         }
 
-        private static bool IsInvalidSpawnPointHighSafety(List<GameObject> spawnDenialPoints, Vector3 position, List<Vector3> safetyZones, bool needsSafetyZone)
+        private static bool IsInvalidSpawnPointHighSafety(List<GameObject> spawnDenialPoints, Transform[] shipPathPoints, Vector3 position, List<Vector3> safetyZones, bool needsSafetyZone)
         {
-            if (IsInvalidSpawnPoint(spawnDenialPoints, position))
+            if (IsInvalidSpawnPoint(spawnDenialPoints, shipPathPoints, position))
             {
                 return true;
             }
@@ -206,10 +217,10 @@ namespace LCHazardsOutside.Patches {
             return false;
         }
 
-        private static void CalculateMiddlePoint(Vector3 shipLandPosition, Vector3 mainEntrancePosition, float spawnRadiusMultiplier, out Vector3 middlePoint, out float spawnRadius)
+        private static void CalculateCenterPosition(Vector3 shipLandPosition, Vector3 mainEntrancePosition, float spawnRadiusMultiplier, out Vector3 centerPosition, out float spawnRadius)
         {
-            middlePoint = (shipLandPosition + mainEntrancePosition) / 2;
-            spawnRadius = Vector3.Distance(mainEntrancePosition, middlePoint) * spawnRadiusMultiplier;
+            centerPosition = (shipLandPosition + mainEntrancePosition) / 2;
+            spawnRadius = Vector3.Distance(mainEntrancePosition, centerPosition) * spawnRadiusMultiplier;
         }
     }
 }

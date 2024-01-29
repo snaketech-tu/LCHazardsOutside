@@ -170,13 +170,11 @@ namespace LCHazardsOutside.Patches {
 
         private static bool IsInvalidSpawnPoint(List<GameObject> spawnDenialPoints, Transform[] shipPathPoints, Vector3 randomPosition)
         {
-            bool invalidSpawnPointFound = false;
             foreach (GameObject spawnDenialObject in spawnDenialPoints)
             {
                 if (Vector3.Distance(randomPosition, spawnDenialObject.transform.position) < 4f)
                 {
-                    invalidSpawnPointFound = true;
-                    break;
+                    return true;
                 }
             }
 
@@ -184,12 +182,11 @@ namespace LCHazardsOutside.Patches {
             {
                 if (Vector3.Distance(shipPathTransform.position, randomPosition) < 6f)
                 {
-                    invalidSpawnPointFound = true;
-                    break;
+                    return true;
                 }
             }
 
-            return invalidSpawnPointFound;
+            return false;
         }
 
         private static bool IsInvalidSpawnPointHighSafety(List<GameObject> spawnDenialPoints, Transform[] shipPathPoints, Vector3 position, List<Vector3> safetyZones, bool needsSafetyZone)

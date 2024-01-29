@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using Unity.Netcode;
-using UnityEngine.UIElements;
 
 namespace LCHazardsOutside.Patches {
 
@@ -23,7 +22,6 @@ namespace LCHazardsOutside.Patches {
             LCHazardsOutside.GetLogger().LogDebug("randomMapSeed: " + StartOfRound.Instance.randomMapSeed);
             System.Random random = new(StartOfRound.Instance.randomMapSeed + 587);
             List<GameObject> spawnDenialPoints = [.. GameObject.FindGameObjectsWithTag("SpawnDenialPoint")];
-            List<Transform> shipPathPoints = [.. __instance.shipSpawnPathPoints];
 
             LCHazardsOutside.GetLogger().LogDebug("Getting spawnable objects..");
             List<SpawnableMapObject> hazardObjects = [.. __instance.currentLevel.spawnableMapObjects];

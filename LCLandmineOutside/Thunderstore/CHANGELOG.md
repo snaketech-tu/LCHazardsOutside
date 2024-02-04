@@ -1,3 +1,13 @@
+v1.1.0
+======
+- Added a new configuration using a moon list per hazard.
+- Added a global outside hazard spawn chance (0-100%) to the configuration.
+- Added modded moon support.
+- Reworked spawning objects so that they spawn more reliably.
+- Fixed wonky rotation on some slopes. 
+- Refactored code to make more spawn strategies possible.
+- Updated README.
+
 v1.0.2
 ======
 - Fixed slightly levitating hazards.

@@ -10,8 +10,11 @@ Literally. Because there's probably a turret back there too. Happy surviving!
 Details
 --------
 - Seeded hazard spawns so they can be replicated. Try it out on challenge moons!
-- Configuration for each hazard.
-- Modded moons are partially supported due to different layer usage.
+- Configuration for each hazard:
+    - Min/Max spawn rates per hazard.
+    - Min/Max spawn rates per moon per hazard.
+    - Global "No Extra Hazard Spawn" chance from 0-100%.
+- Modded moons are supported. Keep in mind that hazard spawn points might be a bit chaotic due to different layer usages.
 - Modded hazards are supported (if added to the game correctly). Successfully tested with Evaisa's teleport traps from [LethalThings](https://thunderstore.io/c/lethal-company/p/Evaisa/LethalThings/).
 - "Safe" zones for turret spawns to avoid game breaking (because that's no fun).
 - Fire exits should be relatively safe, although this may change in the future.
@@ -26,31 +29,9 @@ Installation
 Upcoming features
 -----------------
 
-- Spawn rate configuration per moon. This includes both vanilla and modded moons.
 - Various configurable spawn strategies. This could include making fire exits less safe, or having a turret guard an exit.
-- A global chance that there are no hazards at all outside.
 
 Known issues
 ------------
 
-- Some slopes can give the hazard a slightly off rotation.
 - Rotation does not work at all on Vow for some reason.
-- An unreasonably high number of hazards could cause stability problems (this definitely needs more testing).
-
-Default rates
--------------
-
-### Landmines:  
-- Enabled: true
-- Minimum spawn rate: 5
-- Maximum spawn rate: 15
-
-### Turrets:
-- Enabled: true
-- Minimum spawn rate: 0
-- Maximum spawn rate: 1
-
-### Modded hazards:
-- Enabled: true
-- Minimum spawn rate: 0
-- Maximum spawn rate: 2

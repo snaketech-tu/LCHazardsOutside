@@ -145,8 +145,9 @@ namespace LCHazardsOutside.Patches {
 
             List<GameObject> gameObjects = [];
 
-            int roomLayerMask = 1 << LayerMask.NameToLayer("Room");
-            int effectiveLayerMask = LCUtils.IsVanillaMoon(__instance.currentLevel) ? roomLayerMask : -1;
+            int roomLayerMask = LayerMask.GetMask("Room");
+            int moddedMoonLayerMask = LayerMask.GetMask("Room", "Default");
+            int effectiveLayerMask = LCUtils.IsVanillaMoon(__instance.currentLevel) ? roomLayerMask : moddedMoonLayerMask;
 
             for (int j = 0; j < actualSpawnRate; j++)
             {
@@ -230,7 +231,7 @@ namespace LCHazardsOutside.Patches {
 
             foreach (Vector3 safetyPosition in safetyZones)
             {
-                if (Vector3.Distance(position, safetyPosition) <= 20f)
+                if (Vector3.Distance(position, safetyPosition) <= 16f)
                 {
                     return true;
                 }

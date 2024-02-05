@@ -17,9 +17,6 @@ namespace LCHazardsOutside
             float y = centerPoint.y;
             float x, y2, z;
 
-            // Geometry layer
-            int roomLayerMask = (1 << LayerMask.NameToLayer("Room"));
-
             Vector3 randomPosition;
 
             for (int i = 0; i < maxAttempts; i++)
@@ -30,15 +27,12 @@ namespace LCHazardsOutside
                 randomPosition = centerPoint + new Vector3(x, y2, z);
                 randomPosition.y = y;
 
-                float maxDistance = Vector3.Distance(centerPoint, randomPosition) + 50f;
+                float maxDistance = Vector3.Distance(centerPoint, randomPosition) + 30f;
 
                 if (NavMesh.SamplePosition(randomPosition, out NavMeshHit navMeshHit, maxDistance, -1))
                 {
-                    if (Physics.Raycast(randomPosition + Vector3.up, Vector3.down, out RaycastHit groundHit, 1000f, roomLayerMask))
+                    if (Physics.Raycast(navMeshHit.position + Vector3.up, Vector3.down, out RaycastHit groundHit, 50f, layerMask))
                     {
-                        float slopeAngle = Vector3.Angle(groundHit.point, Vector3.up);
-                        Plugin.GetLogger().LogDebug($"Nav hit at: {navMeshHit.position} and angle of {slopeAngle}");
-
                         return (groundHit.point + Vector3.up * 0.1f, Quaternion.FromToRotation(Vector3.up, groundHit.normal));
                     } else
                     {

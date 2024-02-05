@@ -7,7 +7,6 @@ using HarmonyLib;
 using LCHazardsOutside.Patches;
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 
 namespace LCHazardsOutside
 {
@@ -15,7 +14,7 @@ namespace LCHazardsOutside
     public class Plugin : BaseUnityPlugin {
         private const string modGUID = "snake.tech.LCHazardsOutside";
         private const string modName = "LCHazardsOutside";
-        private const string modVersion = "1.1.0.0";
+        private const string modVersion = "1.1.1.0";
 
         private readonly Harmony harmony = new(modGUID);
 
@@ -61,7 +60,7 @@ namespace LCHazardsOutside
             globalLandmineMinSpawnRate = Config.Bind("Landmine", "LandmineMinSpawnRate", 5, "Minimum amount of landmines to spawn outside.");
             globalLandmineMaxSpawnRate = Config.Bind("Landmine", "LandmineMaxSpawnRate", 15, "Maximum amount of landmines to spawn outside.");
             ConfigEntry<string> landmineMoonString = Config.Bind("Landmine", "LandmineMoons", "", "The moon(s) where the landmines can spawn outside on in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. \"experimentation:5:15,rend:0:10,dine:10:15\")\n" +
-                "NOTE: These must be the internal data names of the levels (all vanilla moons are \"MoonnameLevel\", for modded moon support you will have to find their name if it doesn't follow the convention).\n");
+                "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal i.e. vow, march and for modded moons you will have to find their name).\n");
               
             landmineMoonMap = ParseMoonString(landmineMoonString.Value);
 
@@ -69,7 +68,7 @@ namespace LCHazardsOutside
             globalTurretMinSpawnRate = Config.Bind("Turret", "TurretMinSpawnRate", 0, "Minimum amount of turrets to spawn outside.");
             globalTurretMaxSpawnRate = Config.Bind("Turret", "TurretMaxSpawnRate", 1, "Maximum amount of turrets to spawn outside.");
             ConfigEntry<string> turretMoonString = Config.Bind("Turret", "TurretMoons", "", "The moon(s) where the landmines can spawn outside on in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. \"experimentation:5:15,rend:0:10,dine:10:15\")\n" +
-               "NOTE: These must be the internal data names of the levels (all vanilla moons are \"MoonnameLevel\", for modded moon support you will have to find their name if it doesn't follow the convention).\n");
+               "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal i.e. vow, march and for modded moons you will have to find their name).\n");
 
             turretMoonMap = ParseMoonString(turretMoonString.Value);
 
@@ -77,7 +76,7 @@ namespace LCHazardsOutside
             globalCustomHazardMinSpawnRate = Config.Bind("Custom", "CustomHazardMinSpawnRate", 1, "Minimum amount of custom hazards to spawn outside.");
             globalCustomHazardMaxSpawnRate = Config.Bind("Custom", "CustomHazardMaxSpawnRate", 2, "Maximum amount of custom hazards to spawn outside.");
             ConfigEntry<string> customHazardMoonString = Config.Bind("Custom", "CustomHazardMoons", "", "The moon(s) where the custom hazards can spawn outside on in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. \"experimentation:5:15,rend:0:10,dine:10:15\")\n" +
-               "NOTE: These must be the internal data names of the levels (all vanilla moons are \"MoonnameLevel\", for modded moon support you will have to find their name if it doesn't follow the convention).\n");
+               "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal e.g. vow, march and for modded moons you will have to find their name).\n");
 
             customHazardMoonMap = ParseMoonString(customHazardMoonString.Value);
         }
@@ -91,7 +90,7 @@ namespace LCHazardsOutside
 
             Dictionary<string, MoonMinMax> moonMap = [];
 
-            string[] moonMinMaxList = moonString.Trim().Split(',');
+            string[] moonMinMaxList = moonString.Trim().ToLower().Split(',');
 
             foreach (string moonMinMax in moonMinMaxList)
             {

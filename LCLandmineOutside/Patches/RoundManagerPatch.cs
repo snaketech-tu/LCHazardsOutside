@@ -33,7 +33,7 @@ namespace LCHazardsOutside.Patches {
 
                 if (random.NextDouble() < chance)
                 {
-                    Plugin.GetLogger().LogDebug("No hazards spawned outside due to global chance.");
+                    Plugin.GetLogger().LogInfo("No hazards spawned outside due to global chance.");
                     return;
                 }
             }
@@ -139,7 +139,6 @@ namespace LCHazardsOutside.Patches {
             Vector3 mainEntrancePosition = RoundManager.FindMainEntrancePosition(false, true);
 
             safetyPositions.Add(shipLandPosition);
-            Plugin.GetLogger().LogDebug("Ship spawn point: " + shipLandPosition);
 
             spawnStrategy.CalculateCenterPosition(shipLandPosition, mainEntrancePosition, [], hazardCalculationContainer.SpawnRatioMultiplier, out Vector3 middlePoint, out float spawnRadius);
 

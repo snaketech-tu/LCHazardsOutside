@@ -1,3 +1,9 @@
+v1.1.1
+======
+- Cleared up some confusion about moon name format in the config.
+- Fixed issue where moon names were expected to be lowercased otherwise they would not be recognized.
+- Further improved modded moon support.
+
 v1.1.0
 ======
 - Added a new configuration using a moon list per hazard.

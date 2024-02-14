@@ -1,8 +1,13 @@
+v1.1.2
+======
+- Fixed max number being excluded causing no turrets to spawn by default. This closes [issue #1](https://github.com/snaketech-tu/LCHazardsOutside/issues/1).
+
 v1.1.1
 ======
 - Cleared up some confusion about moon name format in the config.
 - Fixed issue where moon names were expected to be lowercased otherwise they would not be recognized.
 - Further improved modded moon support.
+- Decreased turret safety area sizes a bit.
 
 v1.1.0
 ======
@@ -30,5 +35,4 @@ v1.0.1
 
 v1.0.0
 ======
-
 - Initial release.

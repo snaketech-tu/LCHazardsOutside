@@ -130,7 +130,7 @@ namespace LCHazardsOutside.Patches {
             // This is where the ship actually lands.
             Transform shipLandingTransform = shipSpawnPathPoints.Last();
 
-            int actualSpawnRate = hazardCalculationContainer.Random.Next(hazardCalculationContainer.MinSpawnRate, hazardCalculationContainer.MaxSpawnRate);
+            int actualSpawnRate = hazardCalculationContainer.Random.Next(hazardCalculationContainer.MinSpawnRate, hazardCalculationContainer.MaxSpawnRate + 1);
             Plugin.GetLogger().LogDebug("Actual spawn rate: " + actualSpawnRate);
 
             List<Vector3> safetyPositions = new(2);

@@ -14,7 +14,7 @@ Details
     - Min/Max spawn rates per hazard.
     - Min/Max spawn rates per moon per hazard.
     - Global "No Extra Hazard Spawn" chance from 0-100%.
-- Modded moons are supported. Keep in mind that hazard spawn points might be a bit chaotic due to different layer usages.
+- Modded moons are supported. Keep in mind that hazard spawn points might be unpredictable due to modders layering their moons differently than the base game.
 - Modded hazards are supported (if added to the game correctly). Successfully tested with Evaisa's teleport traps from [LethalThings](https://thunderstore.io/c/lethal-company/p/Evaisa/LethalThings/).
 - "Safe" zones for turret spawns to avoid game breaking (because that's no fun).
 - Fire exits should be relatively safe, although this may change in the future.

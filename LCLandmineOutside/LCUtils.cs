@@ -17,6 +17,7 @@ namespace LCHazardsOutside
                 return string.Empty;
             }
         }
+
         public static bool IsVanillaMoon(string moonName)
         {
             return Enum.TryParse(typeof(VanillaMoon), moonName, true, out _);

@@ -4,7 +4,6 @@ using UnityEngine;
 using System.Linq;
 using Unity.Netcode;
 using LCHazardsOutside.Abstract;
-using Dissonance.Integrations.Unity_NFGO;
 using System.Collections;
 using System;
 
@@ -50,10 +49,30 @@ namespace LCHazardsOutside.Patches {
                     SpawnableMapObject hazardObject = hazardObjects[i];
                     bool isIncreasedMapHazardSpawn = __instance.increasedMapHazardSpawnRateIndex == i;
 
-                    Plugin.GetLogger().LogDebug("Current spawnable object: " + hazardObject.prefabToSpawn);
+                    Plugin.GetLogger().LogDebug("Current spawnable object: " + hazardObject.prefabToSpawn.name);
 
                     bool isTurret = hazardObject.prefabToSpawn.GetComponentInChildren<Turret>() != null;
                     bool isLandmine = hazardObject.prefabToSpawn.GetComponentInChildren<Landmine>() != null;
+                    bool isCustom = !isLandmine && !isTurret;
+                    bool isBlacklisted = false;
+
+                    if (isCustom)
+                    {
+                        foreach (Type blockListEntry in Plugin.instance.hazardBlockList)
+                        {
+                            if (hazardObject.prefabToSpawn.GetComponent(blockListEntry) != null)
+                            {
+                                isBlacklisted = true;
+                                Plugin.GetLogger().LogInfo($"{blockListEntry} is blocked from spawning outside.");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (isBlacklisted)
+                    {
+                        continue;
+                    }
 
                     if (isLandmine && Plugin.instance.enableLandmine.Value)
                     {
@@ -86,7 +105,7 @@ namespace LCHazardsOutside.Patches {
                     }
                           
                     // Unknown Hazard
-                    if (!isLandmine && !isTurret && Plugin.instance.enableCustomHazard.Value)
+                    if (isCustom && Plugin.instance.enableCustomHazard.Value)
                     {
                         Plugin.GetLogger().LogInfo("Spawning custom hazards outside...");
                         int configMinSpawnRate = Plugin.instance.globalCustomHazardMinSpawnRate.Value;
@@ -94,7 +113,7 @@ namespace LCHazardsOutside.Patches {
                         Plugin.instance.customHazardMoonMap.TryGetValue(sanitizedPlanetName, out MoonMinMax moonMinMax);
 
                         DetermineMinMaxSpawnRates(isIncreasedMapHazardSpawn, configMinSpawnRate, configMaxSpawnRate, moonMinMax, out int minSpawnRate, out int maxSpawnRate);
-                        HazardCalculationContainer customContainer = new(random, spawnDenialPoints, hazardObject, 1, 1);
+                        HazardCalculationContainer customContainer = new(random, spawnDenialPoints, hazardObject, minSpawnRate, maxSpawnRate);
 
                         CalculateHazardSpawn(__instance, customContainer, new DefaultSpawnStrategy());
                     }
@@ -150,7 +169,6 @@ namespace LCHazardsOutside.Patches {
 
             for (int j = 0; j < actualSpawnRate; j++)
             {
-                System.Random random = hazardCalculationContainer.Random;
                 (Vector3 randomPosition, Quaternion quaternion) = spawnStrategy.GetRandomGroundPositionAndRotation(middlePoint, spawnRadius, hazardCalculationContainer.Random, effectiveLayerMask);
 
                 if (randomPosition == Vector3.zero)
@@ -168,17 +186,20 @@ namespace LCHazardsOutside.Patches {
                     continue;
                 }
 
-                gameObjects.Add(InstantiateHazardObject(__instance, random, hazardCalculationContainer.SpawnableMapObject, randomPosition, quaternion));
+                gameObjects.Add(InstantiateHazardObject(__instance, hazardCalculationContainer.SpawnableMapObject, randomPosition, quaternion));
 
                 hazardCounter++;
             }
 
-            __instance.StartCoroutine(SpawnHazardsInBulk(gameObjects));
+            if (!Plugin.instance.spawnCompatibilityMode)
+            {
+                __instance.StartCoroutine(SpawnHazardsInBulk(gameObjects));
+            }
 
             Plugin.GetLogger().LogDebug("Total hazard amount: " + hazardCounter);
         }
 
-        private static GameObject InstantiateHazardObject(RoundManager __instance, System.Random random, SpawnableMapObject spawnableMapObject, Vector3 position, Quaternion quaternion)
+        private static GameObject InstantiateHazardObject(RoundManager __instance, SpawnableMapObject spawnableMapObject, Vector3 position, Quaternion quaternion)
         {
             Plugin.GetLogger().LogDebug("Spawn hazard outside at: " + position);
             GameObject gameObject = UnityEngine.Object.Instantiate(spawnableMapObject.prefabToSpawn, position, quaternion, __instance.mapPropsContainer.transform);
@@ -190,7 +211,12 @@ namespace LCHazardsOutside.Patches {
 
             gameObject.SetActive(value: true);
             gameObject.layer = LayerMask.NameToLayer(HAZARD_LAYER_NAME);
-            //gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+
+            if (Plugin.instance.spawnCompatibilityMode)
+            {
+                gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+
+            }
 
             return gameObject;
         }

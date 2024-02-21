@@ -1,3 +1,9 @@
+v1.1.3
+======
+- Added compatibility patch for LategameUpgrades -> Shopping carts are now blocked from spawning outside.
+- Added experimental fix for BrutalCompanyMinus. Might revert this one if it has no effect.
+- Fixed issue where min/max config values for custom hazards were not applied.
+
 v1.1.2
 ======
 - Fixed max number being excluded causing no turrets to spawn by default. This closes [issue #1](https://github.com/snaketech-tu/LCHazardsOutside/issues/1).

@@ -20,11 +20,29 @@ Details
 - Fire exits should be relatively safe, although this may change in the future.
 
 Installation
-------------  
+------------
+
+### Automatic (Recommended)
+
+- Install through Thunderstore or r2modman.
+
+### Manual
 
 - Install BepinEx.
 - Place BepInEx/plugins/LCHazardsOutside.dll in your BepInEx/plugins folder.
 - That's it! Only the host needs this mod installed! Amazing!
+
+FAQ
+---
+
+> **Q**: Does only the host need this mod?  
+> **A**: Yes.
+
+> **Q**: What if the others have it? Will it break?  
+> **A**: No, the mod will simply not do anything if the user is not hosting.
+
+> **Q**: Why is [_insert any modded object here_] also spawning outside?  
+> **A**: It means that the modder put that object into the base game's list of hazards. If it causes issues, please create an issue on github for a compatibility patch. I'll look into it if I have the time.
 
 Upcoming features
 -----------------

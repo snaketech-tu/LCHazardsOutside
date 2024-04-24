@@ -1,3 +1,13 @@
+1.2.2
+=====
+- Fixed compatibility to LategameUpgrades: All current and future contract-based items won't be forced to spawn outside anymore.  
+- Increased spawn safety radius for turrets and spike traps. SHip is now a bit safer even if spawn denial areas are missing on custom moon.  
+- Better error handling to gracefully handle objects that are destroyed.
+
+1.2.1  
+=====
+- Fixed default values for custom hazards. Now disabled by default.
+
 1.2.0 (v50 Update)  
 ==================  
 - Updated for full support of v50.

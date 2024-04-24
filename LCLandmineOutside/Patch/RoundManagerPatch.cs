@@ -130,16 +130,18 @@ namespace LCHazardsOutside.Patches
 
             // This is where the ship actually lands.
             Vector3 shipLandPosition = shipSpawnPathPoints.Last().position;
+            //Vector3 shipFront = GameObject.FindGameObjectWithTag("")
 
-            int actualSpawnRate = hazardCalculationContainer.Random.Next(hazardCalculationContainer.MinSpawnRate, hazardCalculationContainer.MaxSpawnRate + 1);
-            Plugin.GetLogger().LogDebug("Actual spawn rate: " + actualSpawnRate);
+            int randomSpawnRate = hazardCalculationContainer.Random.Next(hazardCalculationContainer.MinSpawnRate, hazardCalculationContainer.MaxSpawnRate + 1);
+            Plugin.GetLogger().LogDebug("Random spawn rate: " + randomSpawnRate);
 
             List<SpawnPositionData> positionDataList = spawnStrategy.CalculateCenterPositions(shipLandPosition, mainEntrancePosition, fireExitPositions, hazardCalculationContainer.SpawnRatioMultiplier);
 
             List<GameObject> gameObjects = [];
             int effectiveLayerMask = hazardCalculationContainer.LayerMask;
 
-            int spawnRatePerPosition = actualSpawnRate / positionDataList.Count;
+            int spawnRatePerPosition = randomSpawnRate / positionDataList.Count;
+            Plugin.GetLogger().LogDebug("Actual spawn rate per position: " + spawnRatePerPosition);
 
             foreach (SpawnPositionData spawnPositionData in positionDataList)
             {
@@ -153,7 +155,18 @@ namespace LCHazardsOutside.Patches
                         continue;
                     }
 
-                    bool invalidSpawnPointFound = IsInvalidSpawnPoint(hazardCalculationContainer.SpawnDenialPoints, randomPosition, hazardCalculationContainer.NeedsSafetyZone ? 16f : 8f);
+
+                    List<Vector3> denialPoints = [shipLandPosition];
+                    denialPoints.AddRange(hazardCalculationContainer.SpawnDenialPoints.Select(x => x.transform.position).ToArray());
+                    GameObject playerShipNavmesh = GameObject.Find("PlayerShipNavmesh");
+
+                    if (playerShipNavmesh != null)
+                    {
+                        Vector3 shipPosition = playerShipNavmesh.transform.position;
+                        denialPoints.Add(shipPosition);
+                    }
+
+                    bool invalidSpawnPointFound = IsInvalidSpawnPoint(denialPoints, randomPosition, hazardCalculationContainer.NeedsSafetyZone ? 18f : 8f);
 
                     // Do not spawn the hazard if it's too close to a spawn denial point.
                     if (invalidSpawnPointFound)
@@ -214,11 +227,11 @@ namespace LCHazardsOutside.Patches
             return gameObject;
         }
 
-        private static bool IsInvalidSpawnPoint(List<GameObject> spawnDenialPoints, Vector3 randomPosition, float safetyDistance)
+        private static bool IsInvalidSpawnPoint(List<Vector3> spawnDenialPoints, Vector3 randomPosition, float safetyDistance)
         {
-            foreach (GameObject spawnDenialObject in spawnDenialPoints)
+            foreach (Vector3 spawnDenialPoint in spawnDenialPoints)
             {
-                if (Vector3.Distance(randomPosition, spawnDenialObject.transform.position) < safetyDistance)
+                if (Vector3.Distance(randomPosition, spawnDenialPoint) < safetyDistance)
                 {
                     return true;
                 }
@@ -240,13 +253,29 @@ namespace LCHazardsOutside.Patches
                 for (int j = 0; j < range; j++)
                 {
                     GameObject objectToSpawn = gameObjects[i + j];
+
                     try
                     {
-                        objectToSpawn.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                        if (objectToSpawn != null)
+                        {
+                            NetworkObject networkObject = objectToSpawn.GetComponent<NetworkObject>();
+                            if (networkObject != null)
+                            {
+                                networkObject.Spawn(destroyWithScene: true);
+                            }
+                            else
+                            {
+                                Plugin.GetLogger().LogError($"Hazard {objectToSpawn.name} had no network object and cannot be spawned.");
+                            }
+                        }
+                        else
+                        {
+                            Plugin.GetLogger().LogError($"Hazard object was destroyed before it could spawn. Probably needs compatibility patch.");
+                        }
                     }
                     catch (Exception e)
                     {
-                        Plugin.GetLogger().LogError($"NetworkObject could not be spawned: {e}");
+                        Plugin.GetLogger().LogError($"NetworkObject {objectToSpawn.name} could not be spawned: {e}");
                     }
                 }
 

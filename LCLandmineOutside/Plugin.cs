@@ -109,9 +109,9 @@ namespace LCHazardsOutside
             hazardConfigMap.Add(HazardType.SpikeRoofTrap, new HazardConfiguration(enableSpikeRoofTrap.Value, globalSpikeRoofTrapMinSpawnRate.Value, globalSpikeRoofTrapMaxSpawnRate.Value, spikeRoofTrapMoonMap, spikeRoofTrapSpawnStrategy));
 
             // CustomHazard
-            ConfigEntry<bool> enableCustomHazard = Config.Bind("99. Custom", "EnableCustomHazardOutside", true, "Whether or not to spawn modded hazards outside.");
-            ConfigEntry<int> globalCustomHazardMinSpawnRate = Config.Bind("99. Custom", "CustomHazardMinSpawnRate", 15, minDescription);
-            ConfigEntry<int> globalCustomHazardMaxSpawnRate = Config.Bind("99. Custom", "CustomHazardMaxSpawnRate", 30, maxDescription);
+            ConfigEntry<bool> enableCustomHazard = Config.Bind("99. Custom", "EnableCustomHazardOutside", false, "Whether or not to spawn modded hazards outside.");
+            ConfigEntry<int> globalCustomHazardMinSpawnRate = Config.Bind("99. Custom", "CustomHazardMinSpawnRate", 0, minDescription);
+            ConfigEntry<int> globalCustomHazardMaxSpawnRate = Config.Bind("99. Custom", "CustomHazardMaxSpawnRate", 3, maxDescription);
             ConfigEntry<string> customHazardMoonString = Config.Bind("99. Custom", "CustomHazardMoons", "", moonDescription);
             ConfigEntry<string> customHazardSpawnStrategyString = Config.Bind("99. Custom", "CustomHazardSpawnStrategy", SpawnStrategyType.MainAndFireExit.ToString(), spawnStrategyDescription);
 

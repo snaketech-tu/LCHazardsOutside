@@ -1,12 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using LCHazardsOutside.Data;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace LCHazardsOutside.Abstract
 {
-    internal abstract class SpawnStrategy
+    public abstract class SpawnStrategy
     {
-        public abstract void CalculateCenterPosition(Vector3 shipLandPosition, Vector3 mainEntrancePosition, List<Vector3> pointsOfInterest, float spawnRadiusMultiplier, out Vector3 centerPosition, out float spawnRadius);
+        public abstract List<SpawnPositionData> CalculateCenterPositions(Vector3 shipLandPosition, Vector3 mainEntrancePosition, List<Vector3> pointsOfInterest, float spawnRadiusMultiplier);
 
-        public abstract (Vector3, Quaternion) GetRandomGroundPositionAndRotation(Vector3 centerPoint, float radius = 10f, System.Random randomSeed = null, int layerMask = -1, int maxAttempts = 10);
+        protected SpawnPositionData CalculateCenterWithSpawnRadius(Vector3 shipLandPosition, Vector3 targetPosition, float spawnRadiusMultiplier)
+        {
+            float spawnRadius;
+            Vector3 centerPosition = (shipLandPosition + targetPosition) / 2;
+            spawnRadius = Vector3.Distance(targetPosition, centerPosition) * spawnRadiusMultiplier;
+            centerPosition.y = Mathf.Max(shipLandPosition.y, targetPosition.y);
+
+            return new SpawnPositionData(centerPosition, spawnRadius);
+        }
     }
 }

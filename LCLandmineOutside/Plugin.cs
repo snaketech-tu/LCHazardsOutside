@@ -4,6 +4,8 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using LCHazardsOutside.Abstract;
+using LCHazardsOutside.Data;
 using LCHazardsOutside.ModCompatibility;
 using LCHazardsOutside.Patches;
 using System;
@@ -12,36 +14,24 @@ using System.Collections.Generic;
 namespace LCHazardsOutside
 {
     [BepInPlugin(modGUID, modName, modVersion)]
+    [BepInDependency("com.malco.lethalcompany.moreshipupgrades", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin {
-        private const string modGUID = "snake.tech.LCHazardsOutside";
+        public const string modGUID = "snake.tech.LCHazardsOutside";
         private const string modName = "LCHazardsOutside";
-        private const string modVersion = "1.1.3.0";
+        private const string modVersion = "1.2.0";
 
         private readonly Harmony harmony = new(modGUID);
+        private readonly AcceptableValueRange<int> acceptableSpawnRange = new(0, 100);
+        private readonly AcceptableValueList<string> acceptableSpawnStrategies = new(Enum.GetNames(typeof(SpawnStrategyType)));
 
+        // General Globals
         public static Plugin instance;
         public bool IsCoroutineRunning = false;
         public HashSet<Type> hazardBlockList = [];
-        // Experimental
-        public bool spawnCompatibilityMode = false;
+        public bool v49CompatibilityEnabled = false;
 
-        public ConfigEntry<bool> enableLandmine;
-        public ConfigEntry<int> globalLandmineMinSpawnRate;
-        public ConfigEntry<int> globalLandmineMaxSpawnRate;
-        public Dictionary<string, MoonMinMax> landmineMoonMap;
-
-        public ConfigEntry<bool> enableTurret;
-        public ConfigEntry<int> globalTurretMinSpawnRate;
-        public ConfigEntry<int> globalTurretMaxSpawnRate;
-        public ConfigEntry<string> turretMoonString;
-        public Dictionary<string, MoonMinMax> turretMoonMap;
-
-        public ConfigEntry<bool> enableCustomHazard;
-        public ConfigEntry<int> globalCustomHazardMinSpawnRate;
-        public ConfigEntry<int> globalCustomHazardMaxSpawnRate;
-        public ConfigEntry<string> customHazardMoonString;
-        public Dictionary<string, MoonMinMax> customHazardMoonMap;
-
+        // Config
+        public Dictionary<HazardType, HazardConfiguration> hazardConfigMap = [];
         public ConfigEntry<int> noHazardSpawnChance;
 
 
@@ -56,7 +46,7 @@ namespace LCHazardsOutside
 
             // Compatibility
             new LateGameUpgradesHandler().Apply();
-            new BrutalCompanyMinusHandler().Apply();
+            new V49Handler().Apply();
 
             // Patches
             harmony.PatchAll(typeof(RoundManagerPatch));
@@ -65,62 +55,70 @@ namespace LCHazardsOutside
         }
 
         void LoadConfig() {
-            noHazardSpawnChance = Config.Bind("General", "NoHazardSpawnChance", 0, "A global chance from 0 to 100 in % for NO hazards to spawn outside.\n Use a non-zero chance if you want to make hazards outside more of a surprise.");
+            ConfigDescription spawnStrategyDescription = new(
+                """
+                This setting dictates how spawn positions are allocated. It has 3 possible options: "MainAndFireExit", "MainEntranceOnly" and "FireExitsOnly".
+                When set to "MainAndFireExit", spawn positions are determined based on both the main entrance, the fire exits and the ship.
+                When set to "MainEntranceOnly", spawn positions are limited strictly to the area between the ship and the main entrance of the facility, making spawn points more concentrated and fire exits safe.
+                When set to "FireExitsOnly", spawn positions are limited strictly to the area between the ship and the fire exits of the facility, making fire exits more punishing while leaving the main entrance hassle-free.
+                """, acceptableSpawnStrategies);
+
+            ConfigDescription minDescription = new("Minimum amount to spawn outside.", acceptableSpawnRange);
+            ConfigDescription maxDescription = new("Maximum amount to spawn outside.", acceptableSpawnRange);
+            ConfigDescription moonDescription = new("""
+                The moon(s) where this hazard can spawn outside in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. "experimentation:5:15,rend:0:10,dine:10:15")
+                "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal i.e. vow, march and for modded moons check their description or ask the author).
+                """);
+
+            noHazardSpawnChance = Config.Bind("0. General", "NoHazardSpawnChance", 0, "A global chance from 0 to 100 in % for NO hazards to spawn outside.\n Use a non-zero chance if you want to make hazards outside more of a surprise.");
 
             // Landmine
-            enableLandmine = Config.Bind("Landmine","EnableLandmineOutside", true, "Whether or not to spawn landmines outside."); 
-            globalLandmineMinSpawnRate = Config.Bind("Landmine", "LandmineMinSpawnRate", 5, "Minimum amount of landmines to spawn outside.");
-            globalLandmineMaxSpawnRate = Config.Bind("Landmine", "LandmineMaxSpawnRate", 15, "Maximum amount of landmines to spawn outside.");
-            ConfigEntry<string> landmineMoonString = Config.Bind("Landmine", "LandmineMoons", "", "The moon(s) where the landmines can spawn outside on in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. \"experimentation:5:15,rend:0:10,dine:10:15\")\n" +
-                "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal i.e. vow, march and for modded moons you will have to find their name).\n");
-              
-            landmineMoonMap = ParseMoonString(landmineMoonString.Value);
+            ConfigEntry<bool> enableLandmine = Config.Bind("1. Landmine","EnableLandmineOutside", true, "Whether or not to spawn landmines outside.");
+            ConfigEntry<int> globalLandmineMinSpawnRate = Config.Bind("1. Landmine", "LandmineMinSpawnRate", 15, minDescription);
+            ConfigEntry<int> globalLandmineMaxSpawnRate = Config.Bind("1. Landmine", "LandmineMaxSpawnRate", 30, maxDescription);
+            ConfigEntry<string> landmineMoonString = Config.Bind("1. Landmine", "LandmineMoons", "", moonDescription);
+            ConfigEntry<string> landmineSpawnStrategyString = Config.Bind("1. Landmine", "LandmineSpawnStrategy", SpawnStrategyType.MainAndFireExit.ToString(), spawnStrategyDescription);
+
+            Dictionary<string, MoonMinMax> landmineMoonMap = LCUtils.ParseMoonString(landmineMoonString.Value);
+            SpawnStrategy landmineSpawnStrategy = LCUtils.GetSpawnStrategy(landmineSpawnStrategyString.Value);
+
+            hazardConfigMap.Add(HazardType.Landmine, new HazardConfiguration(enableLandmine.Value, globalLandmineMinSpawnRate.Value, globalLandmineMaxSpawnRate.Value, landmineMoonMap, landmineSpawnStrategy));
 
             // Turret
-            enableTurret = Config.Bind("Turret", "EnableTurretOutside", true, "Whether or not to spawn turrets outside.");
-            globalTurretMinSpawnRate = Config.Bind("Turret", "TurretMinSpawnRate", 0, "Minimum amount of turrets to spawn outside.");
-            globalTurretMaxSpawnRate = Config.Bind("Turret", "TurretMaxSpawnRate", 1, "Maximum amount of turrets to spawn outside.");
-            ConfigEntry<string> turretMoonString = Config.Bind("Turret", "TurretMoons", "", "The moon(s) where the landmines can spawn outside on in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. \"experimentation:5:15,rend:0:10,dine:10:15\")\n" +
-               "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal i.e. vow, march and for modded moons you will have to find their name).\n");
+            ConfigEntry<bool> enableTurret = Config.Bind("2. Turret", "EnableTurretOutside", false, "Whether or not to spawn turrets outside.");
+            ConfigEntry<int> globalTurretMinSpawnRate = Config.Bind("2. Turret", "TurretMinSpawnRate", 0, minDescription);
+            ConfigEntry<int> globalTurretMaxSpawnRate = Config.Bind("2. Turret", "TurretMaxSpawnRate", 1, maxDescription);
+            ConfigEntry<string> turretMoonString = Config.Bind("2. Turret", "TurretMoons", "", moonDescription);
+            ConfigEntry<string> turretSpawnStrategyString = Config.Bind("2. Turret", "TurretSpawnStrategy", SpawnStrategyType.MainAndFireExit.ToString(), spawnStrategyDescription);
 
-            turretMoonMap = ParseMoonString(turretMoonString.Value);
+            Dictionary<string, MoonMinMax> turretMoonMap = LCUtils.ParseMoonString(turretMoonString.Value);
+            SpawnStrategy turretSpawnStrategy = LCUtils.GetSpawnStrategy(turretSpawnStrategyString.Value);
 
-            // Custom
-            enableCustomHazard = Config.Bind("Custom", "EnableCustomHazardOutside", true, "Whether or not to spawn modded hazards outside.");
-            globalCustomHazardMinSpawnRate = Config.Bind("Custom", "CustomHazardMinSpawnRate", 1, "Minimum amount of custom hazards to spawn outside.");
-            globalCustomHazardMaxSpawnRate = Config.Bind("Custom", "CustomHazardMaxSpawnRate", 1, "Maximum amount of custom hazards to spawn outside.");
-            ConfigEntry<string> customHazardMoonString = Config.Bind("Custom", "CustomHazardMoons", "", "The moon(s) where the custom hazards can spawn outside on in the form of a comma separated list of selectable level names with min/max values in moon:min:max format (e.g. \"experimentation:5:15,rend:0:10,dine:10:15\")\n" +
-               "NOTE: These must be the internal data names of the levels (for vanilla moons use the names you see on the terminal e.g. vow, march and for modded moons you will have to find their name).\n");
+            hazardConfigMap.Add(HazardType.Turret, new HazardConfiguration(enableTurret.Value, globalTurretMinSpawnRate.Value, globalTurretMaxSpawnRate.Value, turretMoonMap, turretSpawnStrategy));
 
-            customHazardMoonMap = ParseMoonString(customHazardMoonString.Value);
-        }
+            // SpikeRoofTrap
+            ConfigEntry<bool> enableSpikeRoofTrap = Config.Bind("3. SpikeRoofTrap", "EnableSpikeRoofTrapOutside", true, "Whether or not to spawn spike roof traps outside.");
+            ConfigEntry<int> globalSpikeRoofTrapMinSpawnRate = Config.Bind("3. SpikeRoofTrap", "SpikeRoofTrapMinSpawnRate", 0, minDescription);
+            ConfigEntry<int> globalSpikeRoofTrapMaxSpawnRate = Config.Bind("3. SpikeRoofTrap", "SpikeRoofTrapMaxSpawnRate", 2, maxDescription);
+            ConfigEntry<string> spikeRoofTrapMoonString = Config.Bind("3. SpikeRoofTrap", "SpikeRoofTrapMoons", "", moonDescription);
+            ConfigEntry<string> spikeRoofTrapSpawnStrategyString = Config.Bind("3. SpikeRoofTrap", "SpikeRoofTrapSpawnStrategy", SpawnStrategyType.MainAndFireExit.ToString(), spawnStrategyDescription);
 
-        private Dictionary<string, MoonMinMax> ParseMoonString(string moonString)
-        {
-            if (string.IsNullOrEmpty(moonString))
-            {
-                return [];
-            }
+            Dictionary<string, MoonMinMax> spikeRoofTrapMoonMap = LCUtils.ParseMoonString(spikeRoofTrapMoonString.Value);
+            SpawnStrategy spikeRoofTrapSpawnStrategy = LCUtils.GetSpawnStrategy(spikeRoofTrapSpawnStrategyString.Value);
 
-            Dictionary<string, MoonMinMax> moonMap = [];
+            hazardConfigMap.Add(HazardType.SpikeRoofTrap, new HazardConfiguration(enableSpikeRoofTrap.Value, globalSpikeRoofTrapMinSpawnRate.Value, globalSpikeRoofTrapMaxSpawnRate.Value, spikeRoofTrapMoonMap, spikeRoofTrapSpawnStrategy));
 
-            string[] moonMinMaxList = moonString.Trim().ToLower().Split(',');
+            // CustomHazard
+            ConfigEntry<bool> enableCustomHazard = Config.Bind("99. Custom", "EnableCustomHazardOutside", true, "Whether or not to spawn modded hazards outside.");
+            ConfigEntry<int> globalCustomHazardMinSpawnRate = Config.Bind("99. Custom", "CustomHazardMinSpawnRate", 15, minDescription);
+            ConfigEntry<int> globalCustomHazardMaxSpawnRate = Config.Bind("99. Custom", "CustomHazardMaxSpawnRate", 30, maxDescription);
+            ConfigEntry<string> customHazardMoonString = Config.Bind("99. Custom", "CustomHazardMoons", "", moonDescription);
+            ConfigEntry<string> customHazardSpawnStrategyString = Config.Bind("99. Custom", "CustomHazardSpawnStrategy", SpawnStrategyType.MainAndFireExit.ToString(), spawnStrategyDescription);
 
-            foreach (string moonMinMax in moonMinMaxList)
-            {
-                try
-                {
-                    string[] parts = moonMinMax.Trim().Split(':');
+            Dictionary<string, MoonMinMax> customHazardMoonMap = LCUtils.ParseMoonString(customHazardMoonString.Value);
+            SpawnStrategy customHazardSpawnStrategy = LCUtils.GetSpawnStrategy(customHazardSpawnStrategyString.Value);
 
-                    moonMap.TryAdd(parts[0], new MoonMinMax(int.Parse(parts[1]), int.Parse(parts[2])));
-                }
-                catch (Exception)
-                {
-                    GetLogger().LogError($"There was an error while parsing the moon string {moonMinMax}. Make sure it has the format moon:min:max.");
-                }
-            }
-
-            return moonMap;
+            hazardConfigMap.Add(HazardType.CustomHazard, new HazardConfiguration(enableCustomHazard.Value, globalCustomHazardMinSpawnRate.Value, globalCustomHazardMaxSpawnRate.Value, customHazardMoonMap, customHazardSpawnStrategy));
         }
 
         public static ManualLogSource GetLogger() {

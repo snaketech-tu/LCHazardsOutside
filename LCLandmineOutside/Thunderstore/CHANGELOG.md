@@ -1,3 +1,17 @@
+1.2.0 (v50 Update)  
+==================  
+- Updated for full support of v50.
+- Added backwards compatibility for v49.
+- Added the Spike Roof Trap from v50 as a new configurable hazard.  
+- Added configurable spawn strategies! Currently there are three options: MainAndFireExit, MainEntranceOnly and FireExitsOnly.  
+- Added better error handling and made spawning more reliable.  
+- Spike Roof Traps will spawn flush against a wall if possible.  
+- Increased highest max value from 50 to 100.  
+- Now only landmines and spike traps are enabled by default and other hazards are opt-in for higher difficulty if desired.  
+- Removed experimental BrutalCompanyMinus compatibility patch as it was not needed.  
+- Min/Max values are now sliders in the config.  
+- Updated README.
+
 v1.1.3
 ======
 - Added compatibility patch for LategameUpgrades -> Shopping carts are now blocked from spawning outside.

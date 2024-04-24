@@ -1,14 +1,31 @@
-﻿namespace LCHazardsOutside.Abstract
+﻿using System;
+
+namespace LCHazardsOutside.Abstract
 {
     internal abstract class AbstractCompatibilityHandler
     {
-        public abstract void Apply();
+        protected abstract void DoApply();
 
-        public abstract string GetModGUID();
+        protected abstract string GetModGUID();
 
         public bool IsEnabled()
         {
             return BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(GetModGUID());
+        }
+
+        public void Apply()
+        {
+            if (IsEnabled())
+            {
+                try
+                {
+                    DoApply();
+                } catch (Exception e)
+                {
+                    Plugin.GetLogger().LogError($"There was an error in patching {GetModGUID()}. Skipping... \n {e}\n");
+                }
+                
+            }
         }
 
         public void LogApply()

@@ -1,21 +1,19 @@
 ﻿using HarmonyLib;
 using LCHazardsOutside.Abstract;
+using System.Runtime.CompilerServices;
 
 namespace LCHazardsOutside.ModCompatibility
 {
     internal class LateGameUpgradesHandler : AbstractCompatibilityHandler
     {
-
-        public override void Apply()
+        [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+        protected override void DoApply()
         {
-            if (IsEnabled())
-            {
-                LogApply();
-                Plugin.instance.hazardBlockList.Add(AccessTools.TypeByName("MoreShipUpgrades.UpgradeComponents.Items.Wheelbarrow.ScrapWheelbarrow"));
-            }
+            LogApply();
+            Plugin.instance.hazardBlockList.Add(AccessTools.TypeByName("MoreShipUpgrades.UpgradeComponents.Items.Wheelbarrow.ScrapWheelbarrow"));
         }
 
-        public override string GetModGUID()
+        protected override string GetModGUID()
         {
             return "com.malco.lethalcompany.moreshipupgrades";
         }

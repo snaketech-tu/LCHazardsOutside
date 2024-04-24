@@ -1,4 +1,4 @@
-﻿namespace LCHazardsOutside
+﻿namespace LCHazardsOutside.Data
 {
     internal enum VanillaMoon
     {
@@ -9,6 +9,10 @@
         march,
         rend,
         dine,
-        titan
+        titan,
+        adamance,
+        embrion,
+        artifice,
+        liquidation
     }
 }

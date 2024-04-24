@@ -1,3 +1,7 @@
+1.2.1  
+=====
+- Fixed default values for custom hazards. Now disabled by default.
+
 1.2.0 (v50 Update)  
 ==================  
 - Updated for full support of v50.

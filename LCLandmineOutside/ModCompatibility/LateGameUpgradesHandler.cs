@@ -1,5 +1,4 @@
-﻿using HarmonyLib;
-using LCHazardsOutside.Abstract;
+﻿using LCHazardsOutside.Abstract;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -13,17 +12,45 @@ namespace LCHazardsOutside.ModCompatibility
         protected override void DoApply()
         {
             LogApply();
-            Plugin.instance.hazardBlockList.Add(AccessTools.TypeByName("MoreShipUpgrades.UpgradeComponents.Items.Wheelbarrow.ScrapWheelbarrow"));
-            Assembly targetAssembly = AccessTools.AllAssemblies().FirstOrDefault(assembly => assembly.GetName().Name.Equals("MoreShipUpgrades", System.StringComparison.OrdinalIgnoreCase));
+            Assembly targetAssembly = GetTargetAssembly("MoreShipUpgrades");
+            if (targetAssembly == null)
+            {
+                Plugin.GetLogger().LogError("Target assembly 'MoreShipUpgrades' not found.");
+                return;
+            }
 
-            // Find all types that are subclasses of ContractObject
-            var contractTypes = targetAssembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(AccessTools.TypeByName("ContractObject")));
+            AddTypeToHazardBlockList(targetAssembly, "MoreShipUpgrades.UpgradeComponents.Items.Wheelbarrow.ScrapWheelbarrow");
+            AddContractItemsToBlocklist(targetAssembly);
+        }
 
-            // Add found types to the hazardBlockList
-            foreach (Type type in contractTypes)
+        private void AddTypeToHazardBlockList(Assembly assembly, string typeName)
+        {
+            Type type = assembly.GetTypes().FirstOrDefault(t => t.FullName == typeName);
+            if (type != null)
             {
                 Plugin.instance.hazardBlockList.Add(type);
-                Plugin.GetLogger().LogDebug($"Added {type.Name} to hazardBlockList.");
+                Plugin.GetLogger().LogDebug($"Added {typeName} to hazardBlockList.");
+            }
+            else
+            {
+                Plugin.GetLogger().LogWarning($"Type {typeName} not found in assembly.");
+            }
+        }
+
+        private void AddContractItemsToBlocklist(Assembly assembly)
+        {
+            Type baseType = assembly.GetTypes().FirstOrDefault(t => t.Name == "ContractObject");
+            if (baseType == null)
+            {
+                Plugin.GetLogger().LogError($"Base type ContractObject not found in assembly.");
+                return;
+            }
+
+            var subclasses = assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.IsSubclassOf(baseType));
+            foreach (Type subclass in subclasses)
+            {
+                Plugin.instance.hazardBlockList.Add(subclass);
+                Plugin.GetLogger().LogDebug($"Added {subclass.Name} to hazardBlockList.");
             }
         }
 

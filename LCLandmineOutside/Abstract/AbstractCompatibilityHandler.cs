@@ -1,4 +1,7 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
+using System.Linq;
+using System.Reflection;
 
 namespace LCHazardsOutside.Abstract
 {
@@ -8,7 +11,7 @@ namespace LCHazardsOutside.Abstract
 
         protected abstract string GetModGUID();
 
-        public bool IsEnabled()
+        private bool IsEnabled()
         {
             return BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey(GetModGUID());
         }
@@ -28,9 +31,15 @@ namespace LCHazardsOutside.Abstract
             }
         }
 
-        public void LogApply()
+        protected void LogApply()
         {
             Plugin.GetLogger().LogInfo($"Applying compatibility fixes for {GetModGUID()}.");
+        }
+
+        protected Assembly GetTargetAssembly(string assemblyName)
+        {
+            return AccessTools.AllAssemblies().FirstOrDefault(
+                assembly => assembly.GetName().Name.Equals(assemblyName, StringComparison.OrdinalIgnoreCase));
         }
     }
 }

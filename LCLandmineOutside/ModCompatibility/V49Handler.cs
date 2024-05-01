@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
 using LCHazardsOutside.Abstract;
+using System;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace LCHazardsOutside.ModCompatibility
@@ -10,7 +12,15 @@ namespace LCHazardsOutside.ModCompatibility
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
         protected override void DoApply()
         {
-            Plugin.instance.v49CompatibilityEnabled = !AccessTools.AllTypes().Any(type => type.Name == "SpikeRoofTrap");
+            // Get base game assembly for faster access
+            Assembly targetAssembly = GetTargetAssembly("Assembly-CSharp");
+            if (targetAssembly == null)
+            {
+                Plugin.GetLogger().LogError("Target assembly 'Assembly-CSharp' not found.");
+                return;
+            }
+
+            Plugin.instance.v49CompatibilityEnabled = !targetAssembly.GetTypes().Any(type => type.Name.Equals("SpikeRoofTrap", StringComparison.OrdinalIgnoreCase));
 
             if (Plugin.instance.v49CompatibilityEnabled)
             {

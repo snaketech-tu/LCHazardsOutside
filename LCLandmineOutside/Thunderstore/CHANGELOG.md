@@ -1,3 +1,7 @@
+1.2.4
+=====
+- Optimized load speed of compatibility patches/checks, especially in bigger mod lists.
+
 1.2.3
 =====
 - Removed debug log and actually increased version number.

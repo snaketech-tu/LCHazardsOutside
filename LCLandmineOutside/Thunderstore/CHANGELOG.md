@@ -1,3 +1,7 @@
+1.2.3
+=====
+- Removed debug log and actually increased version number.
+
 1.2.2
 =====
 - Fixed compatibility to LategameUpgrades: All current and future contract-based items won't be forced to spawn outside anymore.  
